@@ -2,16 +2,16 @@
 #
 # search.py
 # ---------
-# Licensing Information:  You are free to use or extend these projects for 
-# educational purposes provided that (1) you do not distribute or publish 
-# solutions, (2) you retain this notice, and (3) you provide clear 
-# attribution to UC Berkeley, including a link to 
+# Licensing Information:  You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to
 # http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero 
+# The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and 
+# Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
@@ -87,9 +87,10 @@ def depthFirstSearch(problem):
 
     print "Start:", problem.getStartState()
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    print "Start's successors:", problem.getSuccessors(problem.getStartState()) 
+    print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     from util import Queue
+    from util import PriorityQueue
     from util import Stack
     from game import Directions
 
@@ -114,16 +115,13 @@ def depthFirstSearch(problem):
                 nodes = createNode(successor_state,solution,current,nodes[current]['cost'] + cost,nodes[current]['depth'] + 1,nodes)
                 frontier.push(successor_state)
 
-def createNode(state,action,parent,cost,depth,nodes):
-    nodes[state] = {'action':action,'parent':parent,'cost':cost,'depth':depth}
-    return nodes
-
 def breadthFirstSearch(problem):
     from util import Queue
+    from util import PriorityQueue
     from util import Stack
     from game import Directions
 
-    frontier =  Queue()
+    frontier = Queue()
     nodes = {}
     closed = []
     solution = []
@@ -138,10 +136,11 @@ def breadthFirstSearch(problem):
             closed.append(current)
             for suc in problem.getSuccessors(current):
                 successor_state,action,cost = suc
-                solution = nodes[current]['action'][:]
-                solution.append(action)
-                nodes = createNode(successor_state,solution,current,nodes[current]['cost'] + cost,nodes[current]['depth'] + 1,nodes)
-                frontier.push(successor_state)
+                if successor_state not in frontier.list:
+                    solution = nodes[current]['action'][:]
+                    solution.append(action)
+                    nodes = createNode(successor_state,solution,current,nodes[current]['cost'] + cost,nodes[current]['depth'] + 1,nodes)
+                    frontier.push(successor_state)
 
 
 def uniformCostSearch(problem):
@@ -155,38 +154,47 @@ def nullHeuristic(state, problem=None):
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
-
+#https://www.redblobgames.com/pathfinding/a-star/introduction.html
 def aStarSearch(problem, heuristic=nullHeuristic):
     from util import Queue
     from util import Stack
     from util import PriorityQueue
     from game import Directions
-
-    frontier =  PriorityQueue()
-    nodes = {}
-    closed = []
-    solution = []
+    #Initialize structures
     start = problem.getStartState()
+    frontier =  PriorityQueue()
+    cost = {}
+    partial_sols = {}
+    solution = []
+    #Using for start node
     frontier.push(start,0)
-    nodes = createNode(start,solution,heuristic(start,problem),0,0,nodes)
+    cost[start] = 0
+    partial_sols[start] = solution[:]
 
+    #Start moving through nodes
     while not frontier.isEmpty():
         current = frontier.pop()
+        solution = partial_sols[current]
+        #Check problem solution
         if problem.isGoalState(current):
-            print(nodes[current]['cost'])
-            return nodes[current]['action']
-        if current not in closed:
-            closed.append(current)
-            for suc in problem.getSuccessors(current):
-                successor_state,action,cost = suc
-                solution = nodes[current]['action'][:]
-                solution.append(action)
-                nodes = createNode(successor_state,solution,current,cost + heuristic(successor_state,problem)
-                ,nodes[current]['depth'] + 1,nodes)
-                frontier.push(successor_state,nodes[successor_state]['cost'])
+            return partial_sols[current]
+        #possible movements
+        for successor in problem.getSuccessors(current):
+            nextnode,action,action_cost = successor
+            new_cost = cost[current] + action_cost #Amount cost + move cost + heuristics
+            if nextnode not in cost or new_cost < cost[nextnode]:#node has no cost assigned or newcost is less than the current cost
+                cost[nextnode] = new_cost #update cost
+                priority = new_cost + heuristic(nextnode,problem)
+                frontier.push(nextnode,priority)#set item with the cost as priority
+                newsolution = solution[:]#copy current solution and add the action
+                newsolution.append(action)
+                partial_sols[nextnode] = newsolution
 
     util.raiseNotDefined()
 
+def createNode(state,action,parent,cost,depth,nodes):
+    nodes[state] = {'action':action,'parent':parent,'cost':cost,'depth':depth}
+    return nodes
 
 # Abbreviations
 bfs = breadthFirstSearch
