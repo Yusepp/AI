@@ -93,54 +93,57 @@ def depthFirstSearch(problem):
     from util import PriorityQueue
     from util import Stack
     from game import Directions
-
+    #structures to use
     frontier = Stack()
-    nodes = {}
+    partial_sols = {}
     closed = []
-    solution = []
-    frontier.push(problem.getStartState())
-    nodes = createNode(problem.getStartState(),solution,None,0,0,nodes)
-
+    #start Initialize
+    start = problem.getStartState()
+    frontier.push(start)
+    partial_sols[start] = []
+    #moving through pathfinding
     while not frontier.isEmpty():
-        current = frontier.pop()
-        if problem.isGoalState(current):
-            return nodes[current]['action']
-        if current not in closed:
-            print current
+        current = frontier.pop()#extract state
+        if problem.isGoalState(current):#check if we reached the goal for return solution
+            return partial_sols[current]
+        if current not in closed: #check if we visited the current and close if not
             closed.append(current)
-            for suc in problem.getSuccessors(current):
-                successor_state,action,cost = suc
-                solution = nodes[current]['action'][:]
+            for successor in problem.getSuccessors(current):#adding possible moves
+                nextnode,action,action_cost = successor
+                solution = partial_sols[current][:]#partial solution
                 solution.append(action)
-                nodes = createNode(successor_state,solution,current,nodes[current]['cost'] + cost,nodes[current]['depth'] + 1,nodes)
-                frontier.push(successor_state)
+                partial_sols[nextnode] = solution
+                frontier.push(nextnode)#put the new state at frontier
 
 def breadthFirstSearch(problem):
     from util import Queue
     from util import PriorityQueue
     from util import Stack
     from game import Directions
-
+    #structures to use
     frontier = Queue()
-    nodes = {}
+    partial_sols = {}
     closed = []
-    solution = []
-    frontier.push(problem.getStartState())
-    nodes = createNode(problem.getStartState(),solution,None,0,0,nodes)
+    #start Initialize
+    start = problem.getStartState()
+    frontier.push(start)
+    partial_sols[start] = []
 
+    closed.append(start)#close start node(if dont do that idk why but bfs does not works like dfs)
+                        #copying dfs and replace Stack for Queue does not pass autograder.
+    #moving through pathfinding
     while not frontier.isEmpty():
         current = frontier.pop()
-        if problem.isGoalState(current):
-            return nodes[current]['action']
-        if current not in closed:
-            closed.append(current)
-            for suc in problem.getSuccessors(current):
-                successor_state,action,cost = suc
-                if successor_state not in frontier.list:
-                    solution = nodes[current]['action'][:]
-                    solution.append(action)
-                    nodes = createNode(successor_state,solution,current,nodes[current]['cost'] + cost,nodes[current]['depth'] + 1,nodes)
-                    frontier.push(successor_state)
+        if problem.isGoalState(current):#check if we reached the goal for return solution
+            return partial_sols[current]
+        for successor in problem.getSuccessors(current):#adding possible moves
+            nextnode,action,action_cost = successor
+            if nextnode not in closed: #check if we visited the next move and close if not
+                closed.append(nextnode)
+                solution = partial_sols[current][:]#partial solution
+                solution.append(action)
+                partial_sols[nextnode] = solution
+                frontier.push(nextnode)#put the new state at frontier
 
 
 def uniformCostSearch(problem):
@@ -154,7 +157,7 @@ def nullHeuristic(state, problem=None):
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
-#https://www.redblobgames.com/pathfinding/a-star/introduction.html
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     from util import Queue
     from util import Stack
@@ -192,9 +195,6 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     util.raiseNotDefined()
 
-def createNode(state,action,parent,cost,depth,nodes):
-    nodes[state] = {'action':action,'parent':parent,'cost':cost,'depth':depth}
-    return nodes
 
 # Abbreviations
 bfs = breadthFirstSearch

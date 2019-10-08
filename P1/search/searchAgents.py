@@ -2,16 +2,16 @@
 #
 # searchAgents.py
 # ---------------
-# Licensing Information:  You are free to use or extend these projects for 
-# educational purposes provided that (1) you do not distribute or publish 
-# solutions, (2) you retain this notice, and (3) you provide clear 
-# attribution to UC Berkeley, including a link to 
+# Licensing Information:  You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to
 # http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero 
+# The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and 
+# Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
@@ -290,22 +290,23 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         # Please add any code here which you would like to use
         # in initializing the problem
-        "*** YOUR CODE HERE ***"
+        self._visited = {}
+
 
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
+        return (self.startingPosition , self.corners)#we get as start our position and the corners position
         util.raiseNotDefined()
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (len(state[1]) == 0)#check if theres no corners left to visit
+        util.raiseNotDefined()#I want state to be (position,corners left :  like the start)
 
     def getSuccessors(self, state):
         """
@@ -320,16 +321,24 @@ class CornersProblem(search.SearchProblem):
 
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+            x,y = state[0]#state is (position,corners left so [0] is position)
+            dx, dy = Actions.directionToVector(action)#movement based on Direction
+            nextx, nexty = int(x + dx), int(y + dy)#moving
+            if not self.walls[nextx][nexty]:#checking if thats a valid move(no wall)
+            #We move with this function so we need to check if we have collision with corner here.
+                if((nextx,nexty) in state[1]):#we have found a corner to visit
+                    updatedstate = list(state[1]) #copy left corners
+                    updatedstate.remove((nextx,nexty))#remove the remain corner
+                    nextState = ((nextx, nexty),tuple(updatedstate)) #confirming new move
+                    successors.append( ( nextState, action, 1) )
+                else:
+                    nextState = ((nextx, nexty),state[1][:]) #confirming new move
+                    successors.append( ( nextState, action, 1) )
 
-            "*** YOUR CODE HERE ***"
-
-        self._expanded += 1 # DO NOT CHANGE
+        self._expanded += 1 #expand
+        #control visited nodes
+        if state[0] not in self._visited:
+            self._visited[state] = True
         return successors
 
     def getCostOfActions(self, actions):
@@ -345,6 +354,17 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
+def manhattanDistance(position, corner):
+    "The Manhattan distance heuristic for a PositionSearchProblem"
+    xy1 = position
+    xy2 = corner
+    return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+
+def euclideanHeuristic(position, corner):
+    "The Euclidean distance heuristic for a PositionSearchProblem"
+    xy1 = position
+    xy2 = corner
+    return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
 
 def cornersHeuristic(state, problem):
     """
@@ -361,9 +381,13 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    current_position = state[0]#our location
+    if(len(state[1]) > 0):
+        distance = [manhattanDistance(current_position,corner) for corner in state[1]]#list of distances from position to corners
+        return min(distance) #return the minimum distance so we'll focus in the closest corner
+    else:
+        return 0
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
