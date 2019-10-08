@@ -384,7 +384,8 @@ def cornersHeuristic(state, problem):
     current_position = state[0]#our location
     if(len(state[1]) > 0):
         distance = [manhattanDistance(current_position,corner) for corner in state[1]]#list of distances from position to corners
-        return min(distance) #return the minimum distance so we'll focus in the closest corner
+        return max(distance) #return the max distance so we'll focus in the farest corner
+                             #I found that starting for the farest reduces expanded nodes and simplify a bit the amount of nodes
     else:
         return 0
 
@@ -480,8 +481,17 @@ def foodHeuristic(state, problem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    foodGrid = foodGrid.asList()
+    if len(foodGrid) != 0:
+        dist = [manhattanDistance(position,food) for food in foodGrid]
+        if(position in foodGrid):
+            foodGrid.remove(position)
+        return max(dist) #return the max distance so we'll focus in the farest corner
+                             #I found that starting for the farest reduces expanded nodes and simplify a bit the amount of nodes
+    else:
+        return 0
+
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
