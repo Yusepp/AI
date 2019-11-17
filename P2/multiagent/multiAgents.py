@@ -68,14 +68,30 @@ class ReflexAgent(Agent):
         to create a masterful evaluation function.
         """
         # Useful information you can extract from a GameState (pacman.py)
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
-        newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        successorGameState = currentGameState.generatePacmanSuccessor(action)#state
+        newPos = successorGameState.getPacmanPosition()#tuple
+        newFood = successorGameState.getFood()#instance
+        newGhostStates = successorGameState.getGhostStates()#list
+        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]#list
+        score = successorGameState.getScore()
+        cap = currentGameState.getCapsules()
+        
+        for ghosts in newGhostStates:
+          pos = ghosts.getPosition()
+          dist = manhattanDistance(pos,newPos)
+          if(dist == 1):
+            score -= 15
+          if(dist <= 3 and dist != 1):
+            score -= 10
+          if(dist <= 5 and dist > 3 and dist != 1):
+            score -= 5
+        
+        if newFood[newPos[0]][newPos[1]]:
+          score += 5
+        else:
+          score -= 5
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -129,8 +145,35 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minimax(gameState,index,action,d):
+    
+          if(gameState.isWin() or gameState.isLose() or self.depth == d):#final conditions
+            return self.evaluationFunction(gameState),action
+
+          d += 1 
+          index = index%gameState.getNumAgents()
+          actions = gameState.getLegalActions(index)
+          print(index)
+
+          if(index == 0):  
+            return max([minimax(gameState.generateSuccessor(index,action),index+1,action,d) for action in actions])
+
+          else:
+            return min([minimax(gameState.generateSuccessor(index,action),index+1,action,d) for action in actions])
+        
+        return minimax(gameState,0,None,0)[1]
+          
+          
+          
+
+
+
+        
+
+          
+        
+        
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
