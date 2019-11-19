@@ -1,15 +1,15 @@
 # multiAgents.py
 # --------------
-# Licensing Information:  You are free to use or extend these projects for 
-# educational purposes provided that (1) you do not distribute or publish 
-# solutions, (2) you retain this notice, and (3) you provide clear 
-# attribution to UC Berkeley, including a link to 
+# Licensing Information:  You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to
 # http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero 
+# The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and 
+# Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
@@ -75,7 +75,7 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]#list
         score = successorGameState.getScore()
         cap = currentGameState.getCapsules()
-        
+
         for ghosts in newGhostStates:
           pos = ghosts.getPosition()
           dist = manhattanDistance(pos,newPos)
@@ -85,7 +85,7 @@ class ReflexAgent(Agent):
             score -= 10
           if(dist <= 5 and dist > 3 and dist != 1):
             score -= 5
-        
+
         if newFood[newPos[0]][newPos[1]]:
           score += 5
         else:
@@ -145,34 +145,47 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        def minimax(gameState,index,action,d):
-    
-          if(gameState.isWin() or gameState.isLose() or self.depth == d):#final conditions
-            return self.evaluationFunction(gameState),action
-
-          d += 1 
-          index = index%gameState.getNumAgents()
-          actions = gameState.getLegalActions(index)
-          print(index)
-
-          if(index == 0):  
-            return max([minimax(gameState.generateSuccessor(index,action),index+1,action,d) for action in actions])
-
-          else:
-            return min([minimax(gameState.generateSuccessor(index,action),index+1,action,d) for action in actions])
-        
-        return minimax(gameState,0,None,0)[1]
-          
-          
-          
+        def minimax(gameState,d):
+            return maxValue(gameState,d)
 
 
+        def maxValue(gameState,d):
+            v = float('-inf'),Directions.STOP
 
-        
+            if(gameState.isWin() or gameState.isLose() or self.depth == d or len(gameState.getLegalActions(0)) == 0):#terminal node
+                return self.evaluationFunction(gameState),Directions.STOP
 
-          
-        
-        
+            for action in gameState.getLegalActions(0):
+                successor = gameState.generateSuccessor(0,action)
+                v = max(v,(minValue(successor,1,d),action))
+            return v
+
+        def minValue(gameState,index,d):
+            v = float('inf'),Directions.STOP
+
+            if(gameState.isWin() or gameState.isLose() or self.depth == d or len(gameState.getLegalActions(index)) == 0):#terminal node
+                return self.evaluationFunction(gameState),Directions.STOP
+
+            for action in gameState.getLegalActions(index):
+                successor = gameState.generateSuccessor(index,action)
+                if(index == gameState.getNumAgents()-1):
+                    v = min(v,(maxValue(successor,d+1),action))
+                else:
+                    v = min(v,(minValue(successor,index+1,d),action))
+            return v
+
+        return minimax(gameState,0)[1]
+
+
+
+
+
+
+
+
+
+
+
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -214,4 +227,3 @@ def betterEvaluationFunction(currentGameState):
 
 # Abbreviation
 better = betterEvaluationFunction
-
