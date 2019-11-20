@@ -275,26 +275,27 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             return expValue(gameState,index,d)
 
           
-        def maxValue(gameState,d):
+        def maxValue(gameState,d):#pacman
           v = (-float('inf'),)
-          actions = gameState.getLegalActions(0)
+          actions = gameState.getLegalActions(0)#possible actions
           for action in actions:
-            successor = gameState.generateSuccessor(0,action)
-            v = max(v,(expectimax(successor,1,d),action))
-          return v
+            successor = gameState.generateSuccessor(0,action)#successor when action in pacman
+            v = max(v,(expectimax(successor,1,d),action))#we call expectimax that is going to call expValue
+          return v#return max probability in first pacman move based on d-depth
 
-        def expValue(gameState,index,d):
-          v = 0
-          actions = gameState.getLegalActions(index)
-          prob = 1./float(len(actions))
+        def expValue(gameState,index,d):#ghosts
+          v = 0#start as no tuple
+          actions = gameState.getLegalActions(index)#possible actions
+          prob = 1./float(len(actions))#prob of each action
           for action in actions:
-            successor = gameState.generateSuccessor(index,action)
-            exp = expectimax(successor,index+1,d)
-            if type(exp) == tuple:
-              v += exp[0]
+            successor = gameState.generateSuccessor(index,action)#successor when action in ghost
+            exp = expectimax(successor,index+1,d)#we call expectimax that is going to call again expValue if ghost
+                                                 #or MaxValue if we pass last ghost(max creates tuple)
+            if type(exp) == tuple:#first time we play with float but later well get tuple so we need to check for
+              v += exp[0]         #get only value(we only care about action in max)
             else:
               v += exp
-          return v*prob
+          return v*prob#sume of values per prob(E(x))
         return expectimax(gameState,0,0)[1]
    
 def betterEvaluationFunction(currentGameState):
