@@ -1,15 +1,15 @@
 # multiAgents.py
 # --------------
-# Licensing Information:  You are free to use or extend these projects for
-# educational purposes provided that (1) you do not distribute or publish
-# solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to
+# Licensing Information:  You are free to use or extend these projects for 
+# educational purposes provided that (1) you do not distribute or publish 
+# solutions, (2) you retain this notice, and (3) you provide clear 
+# attribution to UC Berkeley, including a link to 
 # http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
-#
+# 
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero
+# The core projects and autograders were primarily created by John DeNero 
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and
+# Student side autograding was added by Brad Miller, Nick Hay, and 
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
@@ -75,7 +75,7 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]#list
         score = successorGameState.getScore()
         cap = currentGameState.getCapsules()
-
+        #Idea resting based on ghost proximity and add based on we are on food
         for ghosts in newGhostStates:
           pos = ghosts.getPosition()
           dist = manhattanDistance(pos,newPos)
@@ -85,7 +85,7 @@ class ReflexAgent(Agent):
             score -= 10
           if(dist <= 5 and dist > 3 and dist != 1):
             score -= 5
-
+        
         if newFood[newPos[0]][newPos[1]]:
           score += 5
         else:
@@ -132,60 +132,66 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action from the current gameState using self.depth
           and self.evaluationFunction.
-
           Here are some method calls that might be useful when implementing minimax.
-
           gameState.getLegalActions(agentIndex):
             Returns a list of legal actions for an agent
             agentIndex=0 means Pacman, ghosts are >= 1
-
           gameState.generateSuccessor(agentIndex, action):
             Returns the successor game state after an agent takes an action
-
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        def minimax(gameState,d):
-            return maxValue(gameState,d)
+        def minimax(gameState, d):
+          return maxValue(gameState, d)#we start with max(pacman)
 
+        def maxValue(gameState,d):#this is for pacman!
 
-        def maxValue(gameState,d):
-            v = float('-inf'),Directions.STOP
+          v = (float("-inf"),)#initialize utility/action default theres no action
+          actions = gameState.getLegalActions(0)#get possible moves
 
-            if(gameState.isWin() or gameState.isLose() or self.depth == d or len(gameState.getLegalActions(0)) == 0):#terminal node
-                return self.evaluationFunction(gameState),Directions.STOP
+          if gameState.isWin() or gameState.isLose() or self.depth == d or len(actions) == 0:#check terminal
+            v = (self.evaluationFunction(gameState),)#terminal case first return to archieve(just score)
+            return v
+          #if we arent terminal node we need to check our moves and check ghost moves
+          for action in actions:#possible moves
+            successor = gameState.generateSuccessor(0,action)#if we do this action we generate this state
+            v = max(v, (minValue(successor,1,d)[0],action))#we try to get the lowest score for ghost if we
+            #do this move(note that since we know that terminal returns no move we only care about score [1])
 
-            for action in gameState.getLegalActions(0):
-                successor = gameState.generateSuccessor(0,action)
-                v = max(v,(minValue(successor,1,d),action))
+          return v
+
+        def minValue( gameState, index, d):#this is for ghosts!
+
+          v = (float("inf"),)#initialize utility
+          actions = gameState.getLegalActions(index)#possible moves
+
+          if gameState.isWin() or gameState.isLose() or self.depth == d or len(actions) == 0:#terminal node
+            v = (self.evaluationFunction(gameState),)#terminal case first return to archieve(just score)
             return v
 
-        def minValue(gameState,index,d):
-            v = float('inf'),Directions.STOP
+          for action in actions:
+            successor = gameState.generateSuccessor(index,action)#if we do this action we generate this state
+            
+            if index+1 == gameState.getNumAgents():#we are the last ghost we need to return to pacman
+              v = min(v,(maxValue(successor, d+1)[0],action))#we call maxv (still min tho!)
+            else:
+              v = min(v,(minValue(successor, index+1,d)[0],action))#we are the next ghost so we use again minV
+            #do this move(note that since we know that terminal returns no move we only care about score [1])
 
-            if(gameState.isWin() or gameState.isLose() or self.depth == d or len(gameState.getLegalActions(index)) == 0):#terminal node
-                return self.evaluationFunction(gameState),Directions.STOP
+          return v
 
-            for action in gameState.getLegalActions(index):
-                successor = gameState.generateSuccessor(index,action)
-                if(index == gameState.getNumAgents()-1):
-                    v = min(v,(maxValue(successor,d+1),action))
-                else:
-                    v = min(v,(minValue(successor,index+1,d),action))
-            return v
-
-        return minimax(gameState,0)[1]
-
-
+        return minimax(gameState,0)[1]#action
+          
+          
+          
 
 
 
+        
 
-
-
-
-
-
+          
+        
+        
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -194,11 +200,54 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
 
     def getAction(self, gameState):
-        """
-          Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def AlphaBeta(gameState, d):
+          alpha = -float("inf")
+          beta = float("inf")
+          return maxValue(gameState,d,alpha,beta)#we start with max(pacman)
+
+        def maxValue(gameState,d,alpha,beta):#this is for pacman!
+
+          v = (-float("inf"),)#initialize utility/action default theres no action
+          actions = gameState.getLegalActions(0)#get possible moves
+
+          if gameState.isWin() or gameState.isLose() or self.depth == d or len(actions) == 0:#check terminal
+            v = (self.evaluationFunction(gameState),)#terminal case first return to archieve(just score)
+            return v
+          #if we arent terminal node we need to check our moves and check ghost moves
+          for action in actions:#possible moves
+            successor = gameState.generateSuccessor(0,action)#if we do this action we generate this state
+            v = max(v, (minValue(successor,1,d,alpha,beta)[0],action))#we try to get the lowest score for ghost if we
+            #do this move(note that since we know that terminal returns no move we only care about score [1])
+            if v[0] > beta:#we cut(no more expanding)
+              return v
+            alpha = max(alpha,v[0])#update alpha
+
+          return v
+
+        def minValue(gameState,index,d,alpha,beta):#this is for ghosts!
+
+          v = (float("inf"),)#initialize utility
+          actions = gameState.getLegalActions(index)#possible moves
+
+          if gameState.isWin() or gameState.isLose() or self.depth == d or len(actions) == 0:#terminal node
+            v = (self.evaluationFunction(gameState),)#terminal case first return to archieve(just score)
+            return v
+
+          for action in actions:
+            successor = gameState.generateSuccessor(index,action)#if we do this action we generate this state
+            
+            if index+1 == gameState.getNumAgents():#we are the last ghost we need to return to pacman
+              v = min(v,(maxValue(successor,d+1,alpha,beta)[0],action))#we call maxv (still min tho!)
+            else:
+              v = min(v,(minValue(successor,index+1,d,alpha,beta)[0],action))#we are the next ghost so we use again minV
+            #do this move(note that since we know that terminal returns no move we only care about score [1])
+            if v[0] < alpha:#we cut(no more expand)
+              return v
+            beta = min(beta,v[0])#updating beta
+          
+          return v
+
+        return AlphaBeta(gameState,0)[1]#action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -212,9 +261,42 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def expectimax(gameState,index,d):
+          if index == gameState.getNumAgents():
+            d += 1
+            index = 0
+          #terminal node
+          if gameState.isWin() or gameState.isLose() or self.depth == d:
+            return self.evaluationFunction(gameState)
+          #max node
+          if index == 0:
+            return maxValue(gameState,d)
+          else:#exp node
+            return expValue(gameState,index,d)
 
+          
+        def maxValue(gameState,d):
+          v = (-float('inf'),)
+          actions = gameState.getLegalActions(0)
+          for action in actions:
+            successor = gameState.generateSuccessor(0,action)
+            v = max(v,(expectimax(successor,1,d),action))
+          return v
+
+        def expValue(gameState,index,d):
+          v = 0
+          actions = gameState.getLegalActions(index)
+          prob = 1./float(len(actions))
+          for action in actions:
+            successor = gameState.generateSuccessor(index,action)
+            exp = expectimax(successor,index+1,d)
+            if type(exp) == tuple:
+              v += exp[0]
+            else:
+              v += exp
+          return v*prob
+        return expectimax(gameState,0,0)[1]
+   
 def betterEvaluationFunction(currentGameState):
     """
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
@@ -222,8 +304,21 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+   
+    newPos = currentGameState.getPacmanPosition()#tuple
+    newFood = currentGameState.getFood().asList()#instance
+    newGhostStates = currentGameState.getGhostStates()#list
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]#list
+    score = currentGameState.getScore()
+    cap = currentGameState.getCapsules()
+    #Idea: 1st problem solution does not work well here 9 of 10 got nice score but 1 gets -6000
+    #So I though about using the base score but decrease it based on how far we are from farest food
+    foodDist = [-manhattanDistance(food,newPos) for food in newFood]
+    if not foodDist:
+      foodDist = [0]
+
+    return max(foodDist) + currentGameState.getScore()
 
 # Abbreviation
 better = betterEvaluationFunction
+
