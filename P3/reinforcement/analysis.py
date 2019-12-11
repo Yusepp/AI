@@ -22,9 +22,12 @@
 def question3():
     answerEpsilon = None
     answerLearningRate = None
-    return 'NOT POSSIBLE' #ToDo
-    # If not possible, return 'NOT POSSIBLE'
-
+    return 'NOT POSSIBLE' #
+    
+    # Atfter few tries I noticed that increasing the learning rate maybe noticed as getting closer to cross the bridge but #unfortunetly it does not cross it so he learns to win with the closest terminal state.
+    #Putting an epsilon of 0 will make the agent go straight to the terminal state all time.
+    #So in the end there's no combination of epsilon and lr that allows to find the optimal policy after 50 tries.
+    
 if __name__ == '__main__':
     print 'Answers to analysis questions:'
     import analysis
